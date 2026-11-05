@@ -1,0 +1,138 @@
+ReefCRM — Sales Department Development Roadmap
+Phase 1: Existing Code ka Audit
+Sabse pehle check karenge ki abhi kya complete hai aur kya pending hai.
+- [x] Admin Dashboard ka basic UI
+- [x] Sales Department Dashboard ka basic UI
+- [x] Sales User Dashboard ka basic UI
+- [x] Sales Users ki list backend se fetch karna
+- [x] Sales User create karna
+- [x] Sales User edit karna
+- [x] Sales User activate/deactivate karna
+- [ ] Existing APIs aur frontend components ka complete audit
+- [ ] Mock data aur hardcoded statistics ki list banana
+Goal: Jo kaam already ho chuka hai, use dobara nahi banayenge.
+Phase 2: Roles aur Permissions
+- [ ] Admin role verify karna
+- [ ] Sales Manager role add karna
+- [ ] Team Leader role add karna
+- [ ] Sales User role ko properly configure karna
+- [ ] Role configuration ko reusable banana
+- [ ] Har role ke liye correct dashboard aur sidebar dikhana
+- [ ] Backend par role-based API permissions lagana
+- [ ] Unauthorized users ko doosre roles ke functions access karne se rokna
+Goal: Har user ko sirf uske role aur responsibilities ke according UI aur functions milen.
+Phase 3: Sales Team Management
+- [x] Sales Users ki list
+- [x] Search members
+- [x] Add Sales User
+- [x] Edit Sales User
+- [x] Activate/deactivate Sales User
+- [ ] Sales Manager create aur manage karna
+- [ ] Team Leader create aur manage karna
+- [ ] Team Leader ke saath Sales Users ki team mapping
+- [ ] Actual leads aur conversions ke counts dikhana
+Goal: Admin aur authorized Sales Manager apni permissions ke according Sales team manage kar saken.
+Phase 4: File Upload aur Assignment
+- [ ] Existing file upload functionality ka audit
+- [ ] Admin ko files assign karne ki permission
+- [ ] Sales Manager ko files assign karne ki permission
+- [ ] Ek file multiple Sales Users ko assign karna
+- [ ] Zaroorat ke according alag files alag users ko assign karna
+- [ ] Uploaded files ki details save karna
+- [ ] Assigned Sales User ko files dikhana
+- [ ] File download functionality verify karna
+- [ ] Unauthorized file access ko block karna
+Goal: Admin aur Sales Manager dono files assign kar saken aur Sales User sirf authorized files access kare.
+Phase 5: Lead Management
+- [ ] Lead ka proper database model verify/implement karna
+- [ ] Lead create karna
+- [ ] Leads ko Sales Users ko assign karna
+- [ ] All Leads page complete karna
+- [ ] Lead details dekhna
+- [ ] Lead search aur filters
+- [ ] Assigned Sales User aur assignment date dikhana
+- [ ] Lead status update karna
+- [ ] Follow-up date aur notes save karna
+Goal: Leads ka complete workflow backend se chale, sirf UI mein data dikhane tak limited na rahe.
+Phase 6: Follow-ups aur Lead Status
+Hum ye statuses support karenge:
+- [ ] New
+- [ ] Follow-up
+- [ ] Interested / Prospective
+- [ ] Converted
+- [ ] Not Interested
+Saath mein:
+- [ ] Next follow-up date
+- [ ] Follow-up notes/history
+- [ ] Pending follow-ups ki list
+- [ ] Overdue follow-ups
+- [ ] Status change history
+Goal: Sales User apne leads par hone wali activities track kar sake.
+Phase 7: Converted Client aur Payment Workflow
+- [ ] Lead ko converted mark karne ka process
+- [ ] Payment status track karna
+- [ ] Payment confirmation ke rules decide karna
+- [ ] Converted client ki details save karna
+- [ ] Client ke work-information form ka UI
+- [ ] Form ka data backend mein save karna
+- [ ] Submitted work information ko future Tech workflow ke liye available rakhna
+Goal: Interested lead se paying client banne tak ka process properly track ho.
+
+Payment confirmation aur conversion ke exact rules implementation se pehle finalize karenge.
+Phase 8: Dashboards aur Reports
+Admin Dashboard
+- [ ] Total Leads
+- [ ] Unassigned Leads
+- [ ] Converted Clients
+- [ ] Total aur Active Sales Members
+- [ ] Lead status distribution
+- [ ] Sales performance
+- [ ] Recent activity
+Sales Manager Dashboard
+- [ ] Team ke total leads
+- [ ] Assigned aur unassigned leads
+- [ ] Team conversions
+- [ ] Follow-up performance
+- [ ] Sales Users ki performance
+Team Leader Dashboard
+- [ ] Apni team ke leads
+- [ ] Team members ki performance
+- [ ] Pending follow-ups
+- [ ] Conversion summary
+Sales User Dashboard
+- [ ] My Assigned Leads
+- [ ] My Assigned Files
+- [ ] Follow-ups Due
+- [ ] Converted Clients
+- [ ] Lead status summary
+Goal: Hardcoded numbers ko actual database data se replace karna.
+Phase 9: Final Testing aur Cleanup
+- [ ] Har role se login test
+- [ ] Correct dashboard aur sidebar verify karna
+- [ ] File assignment aur download test
+- [ ] Lead assignment aur status updates test
+- [ ] Follow-up workflow test
+- [ ] Unauthorized API access test
+- [ ] Loading, error aur success messages verify karna
+- [ ] Unused code aur unnecessary mock data remove karna
+- [ ] Complete Sales workflow test karna
+Goal: Sales Department ko end-to-end functional aur reliable banana.
+Phase 10: Future Expansion ki Preparation
+- [ ] Role configuration reusable rakhna
+- [ ] Sidebar/menu configuration ko reusable rakhna
+- [ ] Common UI components reuse karna
+- [ ] API permissions ko centralized aur maintainable rakhna
+- [ ] Future departments ke liye unnecessary dependencies se bachna
+Is phase mein HR aur Tech implement nahi karenge. Sirf architecture ko aisa rakhenge ki future mein unhe add karna easy ho.
+Hamara Working Order
+Sequence	Kaam	Priority
+1	Existing code audit	Abhi
+2	Roles aur permissions	High
+3	Sales Team Management	High
+4	File Upload & Assignment	High
+5	Lead Management	High
+6	Follow-ups & Status	High
+7	Converted Client & Payment	High
+8	Real Dashboard Statistics	High
+9	Testing & Cleanup	High
+10	Future Expansion Preparation	Ongoing
