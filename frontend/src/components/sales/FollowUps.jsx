@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import api from "../../services/api";
+import { useSalesScope, scopeParams } from "../../context/SalesScopeContext";
 
 const STATUS_OPTIONS = [
   { value: "NEW", label: "New" },
@@ -121,6 +122,7 @@ function HistoryEntry({ entry }) {
 }
 
 function FollowUpModal({ lead, onClose, onSaved }) {
+  const scope = useSalesScope();
   const [status, setStatus] = useState(lead.status);
   const [followUpDate, setFollowUpDate] = useState(
     toDateString(lead.followUpDate)
@@ -134,7 +136,9 @@ function FollowUpModal({ lead, onClose, onSaved }) {
 
   const loadHistory = async () => {
     try {
-      const response = await api.get(`/leads/${lead._id}/history`);
+      const response = await api.get(`/leads/${lead._id}/history`, {
+        params: scopeParams(scope),
+      });
       setHistory(response.data.data || []);
     } catch {
       setHistory([]);
@@ -234,6 +238,7 @@ function FollowUpModal({ lead, onClose, onSaved }) {
                   Status
                 </span>
                 <select
+                  disabled={scope.readOnly}
                   value={status}
                   onChange={(e) => {
                     setStatus(e.target.value);
@@ -255,6 +260,7 @@ function FollowUpModal({ lead, onClose, onSaved }) {
                 </span>
                 <input
                   type="date"
+                  disabled={scope.readOnly}
                   value={followUpDate}
                   onChange={(e) => {
                     setFollowUpDate(e.target.value);
@@ -270,6 +276,7 @@ function FollowUpModal({ lead, onClose, onSaved }) {
                 Follow-up Note
               </span>
               <textarea
+                disabled={scope.readOnly}
                 rows={3}
                 value={note}
                 onChange={(e) => {
@@ -298,7 +305,7 @@ function FollowUpModal({ lead, onClose, onSaved }) {
             <button
               type="button"
               onClick={handleSave}
-              disabled={saving}
+              disabled={scope.readOnly || saving}
               className="inline-flex items-center gap-2 rounded-xl bg-[#203F72] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#17325d] disabled:opacity-60"
             >
               <Save size={16} />
@@ -340,6 +347,7 @@ const FILTERS = [
 ];
 
 function FollowUps() {
+  const scope = useSalesScope();
   // "Today" is fixed when the page opens
   const [today] = useState(localToday);
   const [leads, setLeads] = useState([]);
@@ -354,7 +362,9 @@ function FollowUps() {
       setLoading(true);
       setError("");
 
-      const response = await api.get("/leads/follow-ups");
+      const response = await api.get("/leads/follow-ups", {
+        params: scopeParams(scope),
+      });
       setLeads(response.data.data || []);
     } catch (err) {
       setError(
@@ -372,7 +382,9 @@ function FollowUps() {
 
   // Refresh the list without the full-page loading state
   const refreshQuietly = async () => {
-    const response = await api.get("/leads/follow-ups");
+    const response = await api.get("/leads/follow-ups", {
+        params: scopeParams(scope),
+      });
     setLeads(response.data.data || []);
   };
 

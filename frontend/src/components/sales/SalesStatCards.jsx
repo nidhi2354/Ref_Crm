@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import api from "../../services/api";
+import { useSalesScope, scopeParams } from "../../context/SalesScopeContext";
 
 const STATUS_ROWS = [
   { key: "NEW", label: "New", bar: "bg-blue-500" },
@@ -22,6 +23,7 @@ const formatNumber = (value) =>
   new Intl.NumberFormat("en-IN").format(Number(value) || 0);
 
 function SalesStatCards({ onNavigate }) {
+  const scope = useSalesScope();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,7 +35,9 @@ function SalesStatCards({ onNavigate }) {
 
       // Local date, so overdue / today follow-ups match the user's day
       const today = new Date().toLocaleDateString("en-CA");
-      const response = await api.get("/leads/my-stats", { params: { today } });
+      const response = await api.get("/leads/my-stats", {
+        params: { today, ...scopeParams(scope) },
+      });
 
       setStats(response.data.data);
     } catch (err) {

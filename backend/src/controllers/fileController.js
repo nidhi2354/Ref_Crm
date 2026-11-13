@@ -1,8 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const XLSX = require("xlsx");
-
 const { UPLOADS_DIR } = require("../config/paths");
+const { isLeadFile, parseLeadFile } = require("../utils/parseLeadFile");
 
 const User = require("../models/User");
 const File = require("../models/file");
@@ -47,49 +46,31 @@ const uploadFileToSales = async (req, res, next) => {
       });
     }
 
-    // Check whether the uploaded file is Excel or CSV
-    const extension = path
-      .extname(req.file.originalname)
-      .toLowerCase();
-
-    const isSpreadsheet = [".xlsx", ".xls", ".csv"].includes(
-      extension
-    );
+    // Tabular file (Excel, ODS, CSV, TSV, TXT, JSON) ke rows leads banenge.
+    // Baaki files (PDF, Word, images) sirf attachment ki tarah save hongi.
+    const isLeadSource = isLeadFile(req.file.originalname);
 
     let leadRecords = [];
+    let sheetCount = 0;
 
     // ========================================
-    // READ EXCEL/CSV DATA
+    // READ ANY SUPPORTED LEAD FILE
     // ========================================
 
-    if (isSpreadsheet) {
-      const workbook = XLSX.readFile(req.file.path);
+    if (isLeadSource) {
+      try {
+        const parsed = parseLeadFile(req.file.path, req.file.originalname);
 
-      const firstSheetName = workbook.SheetNames[0];
-
-      if (!firstSheetName) {
+        leadRecords = parsed.rows;
+        sheetCount = parsed.sheetCount;
+      } catch (parseError) {
         fs.unlink(req.file.path, () => {});
 
         return res.status(400).json({
           success: false,
-          message: "The uploaded spreadsheet has no worksheet",
+          message: `File read nahi ho paayi: ${parseError.message}`,
         });
       }
-
-      const worksheet = workbook.Sheets[firstSheetName];
-
-      // Convert spreadsheet rows into JavaScript objects
-      const rows = XLSX.utils.sheet_to_json(worksheet, {
-        defval: "",
-        raw: false,
-      });
-
-      // Ignore completely empty rows
-      leadRecords = rows.filter((row) =>
-        Object.values(row).some(
-          (value) => String(value).trim() !== ""
-        )
-      );
 
       if (leadRecords.length === 0) {
         fs.unlink(req.file.path, () => {});
@@ -97,7 +78,7 @@ const uploadFileToSales = async (req, res, next) => {
         return res.status(400).json({
           success: false,
           message:
-            "No lead records found. Please check your Excel/CSV file.",
+            "File mein koi lead record nahi mila. Check karo ki data rows mein hai aur file khaali na ho.",
         });
       }
     }
@@ -122,7 +103,7 @@ const uploadFileToSales = async (req, res, next) => {
 
     let importedCount = 0;
 
-    if (isSpreadsheet) {
+    if (isLeadSource) {
       const leadsToInsert = leadRecords.map((record) => ({
         data: record,
         salesUser: salesUser._id,
@@ -143,8 +124,8 @@ const uploadFileToSales = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      message: isSpreadsheet
-        ? "File uploaded and leads imported successfully"
+      message: isLeadSource
+        ? `File uploaded. ${importedCount} leads imported${sheetCount > 1 ? ` from ${sheetCount} sheets` : ""}.`
         : "File uploaded and assigned successfully",
       data: {
         file: {
@@ -184,7 +165,7 @@ const uploadFileToSales = async (req, res, next) => {
 const getMyFiles = async (req, res, next) => {
   try {
     const files = await File.find({
-      salesUser: req.user._id,
+      salesUser: req.scopeUserId,
     })
       .select("-filePath")
       .sort({ createdAt: -1 });
@@ -207,7 +188,7 @@ const downloadMyFile = async (req, res, next) => {
   try {
     const file = await File.findOne({
       _id: req.params.id,
-      salesUser: req.user._id,
+      salesUser: req.scopeUserId,
     });
 
     if (!file) {

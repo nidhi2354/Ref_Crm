@@ -24,7 +24,7 @@ const removeStored = (files = []) => {
 // @access  Private
 const getMyWorkDetails = async (req, res, next) => {
   try {
-    const details = await WorkDetails.find({ salesUser: req.user._id });
+    const details = await WorkDetails.find({ salesUser: req.scopeUserId });
 
     res.status(200).json({
       success: true,

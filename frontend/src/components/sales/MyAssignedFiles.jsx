@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import api from "../../services/api";
+import { useSalesScope, scopeParams } from "../../context/SalesScopeContext";
 
 function formatFileSize(bytes = 0) {
   if (bytes < 1024) return `${bytes} B`;
@@ -27,6 +28,7 @@ function formatDate(date) {
 }
 
 function MyAssignedFiles() {
+  const scope = useSalesScope();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -37,7 +39,9 @@ function MyAssignedFiles() {
     setError("");
 
     try {
-      const response = await api.get("/files/my-files");
+      const response = await api.get("/files/my-files", {
+        params: scopeParams(scope),
+      });
       setFiles(response.data.data || []);
     } catch (err) {
       setError(
@@ -60,7 +64,7 @@ function MyAssignedFiles() {
     try {
       const response = await api.get(
         `/files/my-files/${file._id}/download`,
-        { responseType: "blob" }
+        { responseType: "blob", params: scopeParams(scope) }
       );
 
       const blobUrl = window.URL.createObjectURL(

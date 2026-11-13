@@ -13,6 +13,7 @@ function SalesSidebar({
   activeNav,
   setActiveNav,
   onLogout,
+  showLogout = true,
 }) {
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard },
@@ -99,14 +100,16 @@ function SalesSidebar({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onLogout}
-            className="mt-4 flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm text-blue-100 transition hover:bg-white/10 hover:text-white"
-          >
-            <LogOut size={18} />
-            Logout
-          </button>
+          {showLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="mt-4 flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm text-blue-100 transition hover:bg-white/10 hover:text-white"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          )}
         </div>
       </aside>
     </>

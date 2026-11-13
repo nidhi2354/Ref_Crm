@@ -4,6 +4,7 @@ const router = express.Router();
 
 const upload = require("../middlewares/upload");
 const { protect, adminOnly } = require("../middlewares/auth");
+const { resolveSalesScope } = require("../middlewares/salesScope");
 const {
   uploadFileToSales,
    getMyFiles,
@@ -28,10 +29,11 @@ router.get("/", protect, adminOnly, getAllAssignedFiles);
 
 
 // Sales user can view their own files
-router.get("/my-files", protect, getMyFiles);
+router.get("/my-files", protect, resolveSalesScope, getMyFiles);
 
 // Sales user can download their own file
-router.get("/my-files/:id/download", protect, downloadMyFile);
+router.get("/my-files/:id/download", protect, resolveSalesScope, downloadMyFile);
+
 
 
 module.exports = router;

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import ClientWorkDetailsModal from "./ClientWorkDetailsModal";
 import api from "../../services/api";
+import { useSalesScope, scopeParams } from "../../context/SalesScopeContext";
 
 import { API_URL } from "../../config";
 
@@ -32,6 +33,7 @@ const statusColors = {
 };
 
 function LeadsTable() {
+  const scope = useSalesScope();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -56,10 +58,8 @@ function LeadsTable() {
         return;
       }
 
-      const response = await axios.get(`${API_URL}/leads`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await api.get("/leads", {
+        params: scopeParams(scope),
       });
 
       setLeads(response.data.data || []);
@@ -92,7 +92,9 @@ function LeadsTable() {
 
   const fetchWorkDetails = async () => {
     try {
-      const response = await api.get("/leads/work-details");
+      const response = await api.get("/leads/work-details", {
+        params: scopeParams(scope),
+      });
       const byLead = {};
 
       (response.data.data || []).forEach((doc) => {
@@ -383,6 +385,7 @@ function LeadsTable() {
                   <td className="px-5 py-4">
                     <select
                       value={lead.status}
+                      disabled={scope.readOnly}
                       onChange={(e) =>
                         handleChange(lead._id, "status", e.target.value)
                       }
@@ -408,6 +411,7 @@ function LeadsTable() {
 
                       <input
                         type="date"
+                        disabled={scope.readOnly}
                         value={
                           lead.followUpDate
                             ? String(lead.followUpDate).slice(0, 10)
@@ -430,6 +434,7 @@ function LeadsTable() {
                     <button
                       type="button"
                       onClick={() => setWorkDetailsLead(lead)}
+                      disabled={scope.readOnly}
                       className="inline-flex min-w-44 items-center justify-center gap-2 rounded-lg border border-[#203F72] px-3 py-2 text-xs font-semibold text-[#203F72] transition hover:bg-blue-50"
                     >
                       <ClipboardList size={14} />
@@ -444,7 +449,7 @@ function LeadsTable() {
                     <button
                       type="button"
                       onClick={() => handleSave(lead)}
-                      disabled={savingId === lead._id}
+                      disabled={scope.readOnly || savingId === lead._id}
                       className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#203F72] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#17325d] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {savingId === lead._id ? (
@@ -490,7 +495,11 @@ function LeadsTable() {
             Showing {filteredLeads.length} of {leads.length} leads
           </span>
 
-          <span>Changes are saved when you click Save.</span>
+          <span>
+            {scope.readOnly
+              ? "Read-only: Admin view. Changes Sales user hi kar sakta hai."
+              : "Changes are saved when you click Save."}
+          </span>
         </div>
       </div>
 

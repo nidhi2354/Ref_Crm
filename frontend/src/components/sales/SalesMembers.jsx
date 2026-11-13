@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import api from "../../services/api";
+import { useNavigate } from "react-router-dom";
 
 function SalesMembers({ role = "SALES" }) {
   const departmentName = role === "TECH" ? "Tech" : "Sales";
@@ -19,7 +20,7 @@ function SalesMembers({ role = "SALES" }) {
 
   const [members, setMembers] = useState([]);
   const [search, setSearch] = useState("");
-  const [selectedMember, setSelectedMember] = useState(null);
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -108,7 +109,6 @@ function SalesMembers({ role = "SALES" }) {
     setFormError("");
     setActionMessage("");
     setActionError("");
-    setSelectedMember(null);
     setFormOpen(true);
   };
 
@@ -123,7 +123,6 @@ function SalesMembers({ role = "SALES" }) {
     setFormError("");
     setActionMessage("");
     setActionError("");
-    setSelectedMember(null);
     setFormOpen(true);
   };
 
@@ -251,12 +250,6 @@ function SalesMembers({ role = "SALES" }) {
             ? { ...item, isActive: updatedMember.isActive }
             : item
         )
-      );
-
-      setSelectedMember((previousMember) =>
-        previousMember?._id === member._id
-          ? { ...previousMember, isActive: updatedMember.isActive }
-          : previousMember
       );
 
       setActionMessage(response.data.message);
@@ -458,13 +451,28 @@ function SalesMembers({ role = "SALES" }) {
 
                     <td className="px-5 py-4">
                       <div className="flex flex-wrap items-center gap-2">
+                        {role === "SALES" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(
+                                `/admin/sales-department/users/${member._id}`
+                              )
+                            }
+                            className="inline-flex items-center gap-2 rounded-lg border border-[#203F72] px-3 py-2 text-sm font-semibold text-[#203F72] hover:bg-blue-50"
+                          >
+                            <Eye size={16} />
+                            View Dashboard
+                          </button>
+                        )}
+
                         <button
                           type="button"
-                          onClick={() => setSelectedMember(member)}
+                          onClick={() => openEditForm(member)}
                           className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
                         >
-                          <Eye size={16} />
-                          View
+                          <Pencil size={16} />
+                          Edit
                         </button>
 
                         <button
@@ -505,112 +513,6 @@ function SalesMembers({ role = "SALES" }) {
           </div>
         )}
       </div>
-
-      {/* Member Details Popup */}
-      {selectedMember && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setSelectedMember(null);
-            }
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="member-details-title"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
-                  {getInitials(selectedMember.name)}
-                </div>
-
-                <div className="min-w-0">
-                  <h3
-                    id="member-details-title"
-                    className="break-words text-xl font-bold text-slate-800"
-                  >
-                    {selectedMember.name}
-                  </h3>
-                  <p className="break-all text-sm text-slate-500">
-                    {selectedMember.email}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedMember(null)}
-                aria-label="Close member details"
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-              >
-                <X size={19} />
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
-              <p>
-                Role: <strong>{selectedMember.role || "SALES"}</strong>
-              </p>
-              <p>
-                Status:{" "}
-                <strong
-                  className={
-                    selectedMember.isActive
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }
-                >
-                  {selectedMember.isActive ? "Active" : "Inactive"}
-                </strong>
-              </p>
-              <p>
-                Assigned Leads: <strong>Not connected yet</strong>
-              </p>
-              <p>
-                Converted Clients: <strong>Not connected yet</strong>
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => openEditForm(selectedMember)}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Pencil size={16} />
-              Edit Member
-            </button>
-
-            <button
-              type="button"
-              disabled={updatingId === selectedMember._id}
-              onClick={() => handleToggleStatus(selectedMember)}
-              className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium disabled:opacity-50 ${selectedMember.isActive
-                ? "bg-red-50 text-red-700 hover:bg-red-100"
-                : "bg-green-50 text-green-700 hover:bg-green-100"
-                }`}
-            >
-              <Power size={16} />
-              {updatingId === selectedMember._id
-                ? "Updating..."
-                : selectedMember.isActive
-                  ? "Deactivate Member"
-                  : "Activate Member"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSelectedMember(null)}
-              className="mt-3 w-full rounded-xl bg-[#203F72] px-4 py-3 font-medium text-white hover:bg-[#19335e]"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Add / Edit Member Form Popup */}
       {formOpen && (

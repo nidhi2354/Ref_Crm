@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { API_URL } from "../../config";
+import BatchReport from "./BatchReport";
 
 function SalesFileAssignment() {
   const [salesUsers, setSalesUsers] = useState([]);
@@ -133,13 +134,9 @@ function SalesFileAssignment() {
       );
 
       const result = response.data;
-      const importedCount = result.data?.leadsImported || 0;
 
-      setMessage(
-        importedCount > 0
-          ? `${result.message}. ${importedCount} leads imported successfully.`
-          : result.message || "File uploaded and assigned successfully."
-      );
+      // Backend message mein leads ki count already hoti hai
+      setMessage(result.message || "File uploaded and assigned successfully.");
 
       setMessageType("success");
       setSelectedFile(null);
@@ -299,7 +296,7 @@ function SalesFileAssignment() {
               </p>
 
               <p className="mt-1 text-xs text-slate-500">
-                Excel, CSV, PDF, Word documents, images and other file types
+                Excel, ODS, CSV, TSV, TXT, JSON (leads ban jayengi) · PDF, Word, images (attachment)
               </p>
 
               <input
@@ -354,14 +351,15 @@ function SalesFileAssignment() {
 
               <div>
                 <p className="text-sm font-semibold text-[#203F72]">
-                  Excel / CSV files
+                  Any tabular data file
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Spreadsheet rows will automatically be imported as leads
-                  for the selected Sales Member. Other supported file types
-                  will be assigned as files without automatically importing
-                  leads.
+                  Excel (.xlsx, .xls, .xlsm, .xlsb), ODS, CSV, TSV, TXT and
+                  JSON files are imported as leads for the selected Sales
+                  Member. Every sheet is imported, and column names can be
+                  anything. Empty rows are skipped. PDF, Word and image files
+                  are assigned as attachments without importing leads.
                 </p>
               </div>
             </div>
@@ -387,6 +385,9 @@ function SalesFileAssignment() {
           </button>
         </form>
       </section>
+
+      {/* Result report of uploaded lead batches */}
+      <BatchReport />
 
       {/* Assigned Files */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

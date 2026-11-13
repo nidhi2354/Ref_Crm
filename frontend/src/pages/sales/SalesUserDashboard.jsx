@@ -1,9 +1,11 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Eye } from "lucide-react";
 
 import SalesSidebar from "../../components/sales/SalesSidebar";
 import SalesHeader from "../../components/sales/SalesHeader";
+import { SalesScopeProvider } from "../../context/SalesScopeContext";
 
 import LeadsTable from "../../components/sales/LeadsTable";
 import MyAssignedFiles from "../../components/sales/MyAssignedFiles";
@@ -57,11 +59,14 @@ function SalesPageContent({ activeNav, setActiveNav }) {
   }
 }
 
-function SalesUserDashboard() {
+// viewUserId: Admin kisi Sales user ka dashboard read-only dekh raha hai
+function SalesUserDashboard({ viewUserId = null, viewUserName = "", onBack }) {
   const navigate = useNavigate();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("Dashboard");
+
+  const isViewing = Boolean(viewUserId);
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
@@ -71,22 +76,47 @@ function SalesUserDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <SalesSidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        activeNav={activeNav}
-        setActiveNav={setActiveNav}
-        onLogout={handleLogout}
-      />
-
-      <div className="min-h-screen md:ml-[255px]">
-        <SalesHeader
+    <SalesScopeProvider
+      value={{ salesUserId: viewUserId, readOnly: isViewing }}
+    >
+      <div className="min-h-screen bg-slate-50">
+        <SalesSidebar
+          sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           activeNav={activeNav}
+          setActiveNav={setActiveNav}
+          onLogout={handleLogout}
+          showLogout={!isViewing}
         />
 
-        <main className="space-y-6 p-4 sm:p-6 lg:p-8">
+        <div className="min-h-screen md:ml-[255px]">
+          <SalesHeader
+            setSidebarOpen={setSidebarOpen}
+            activeNav={activeNav}
+          />
+
+          <main className="space-y-6 p-4 sm:p-6 lg:p-8">
+            {isViewing && (
+              <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="flex items-center gap-2 text-sm text-amber-800">
+                  <Eye size={18} className="shrink-0" />
+                  <span>
+                    Admin view: <strong>{viewUserName || "Sales user"}</strong> ka
+                    dashboard (read-only)
+                  </span>
+                </p>
+
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                >
+                  <ArrowLeft size={16} />
+                  Back to Sales Department
+                </button>
+              </div>
+            )}
+
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
               <h1 className="text-2xl font-bold text-slate-800">
@@ -123,9 +153,10 @@ function SalesUserDashboard() {
             activeNav={activeNav}
             setActiveNav={setActiveNav}
           />
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </SalesScopeProvider>
   );
 }
 

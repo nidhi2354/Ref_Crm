@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import SalesWorkSummary from "../../components/admin/SalesWorkSummary";
 import {
   LayoutDashboard,
   Users,
@@ -203,7 +204,6 @@ function AdminDashboard() {
           </div>
         </header>
 
-        {/* Empty Dashboard Content */}
         <main className="min-h-[calc(100vh-76px)] p-5 sm:p-7 lg:p-9">
           <div>
             <p className="text-sm text-slate-500">
@@ -219,8 +219,10 @@ function AdminDashboard() {
             </p>
           </div>
 
-          {/* No dummy data or unnecessary sections */}
-          <div className="mt-8 min-h-[300px] rounded-2xl border border-dashed border-slate-200 bg-white/60" />
+          {/* Sales team work done by each member */}
+          <div className="mt-8">
+            <SalesWorkSummary />
+          </div>
         </main>
       </div>
     </div>

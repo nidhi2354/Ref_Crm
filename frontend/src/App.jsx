@@ -7,6 +7,7 @@ import SalesUserDashboard from "./pages/sales/SalesUserDashboard";
 import SalesDepartmentDashboard from "./pages/admin/SalesDepartmentDashboard";
 import TechDepartmentDashboard from "./pages/admin/TechDepartmentDashboard";
 import TechUserDashboard from "./pages/tech/TechUserDashboard";
+import SalesUserView from "./pages/admin/SalesUserView";
 
 function App() {
   return (
@@ -30,6 +31,16 @@ function App() {
         element={
           <RequireRole roles={["ADMIN"]}>
             <SalesDepartmentDashboard />
+          </RequireRole>
+        }
+      />
+
+      {/* Admin - view one Sales user's dashboard (read-only) */}
+      <Route
+        path="/admin/sales-department/users/:userId"
+        element={
+          <RequireRole roles={["ADMIN"]}>
+            <SalesUserView />
           </RequireRole>
         }
       />

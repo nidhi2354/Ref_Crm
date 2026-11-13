@@ -1,6 +1,8 @@
 
 const Lead = require("../models/lead");
 const File = require("../models/file");
+const User = require("../models/User");
+const WorkDetails = require("../models/workDetails");
 
 // @desc    Get leads assigned to logged-in Sales User
 // @route   GET /api/leads
@@ -8,7 +10,7 @@ const File = require("../models/file");
 const getMyLeads = async (req, res, next) => {
   try {
     const leads = await Lead.find({
-      salesUser: req.user._id,
+      salesUser: req.scopeUserId,
     })
       .select("-history")
       .populate("sourceFile", "originalName")
@@ -143,7 +145,7 @@ const getMyStats = async (req, res, next) => {
     const startOfToday = new Date(todayText);
     const startOfTomorrow = new Date(startOfToday.getTime() + 86400000);
 
-    const mine = { salesUser: req.user._id };
+    const mine = { salesUser: req.scopeUserId };
     const open = { status: { $nin: ["CONVERTED", "NOT_INTERESTED"] } };
 
     const [byStatus, overdue, dueToday, upcoming, assignedFiles] =
@@ -167,7 +169,7 @@ const getMyStats = async (req, res, next) => {
           ...open,
           followUpDate: { $gte: startOfTomorrow },
         }),
-        File.countDocuments({ salesUser: req.user._id }),
+        File.countDocuments({ salesUser: req.scopeUserId }),
       ]);
 
     const statusCounts = {
@@ -208,7 +210,7 @@ const getMyStats = async (req, res, next) => {
 const getMyFollowUps = async (req, res, next) => {
   try {
     const leads = await Lead.find({
-      salesUser: req.user._id,
+      salesUser: req.scopeUserId,
       followUpDate: { $ne: null },
       status: { $nin: ["CONVERTED", "NOT_INTERESTED"] },
     })
@@ -241,7 +243,7 @@ const getLeadHistory = async (req, res, next) => {
   try {
     const lead = await Lead.findOne({
       _id: req.params.id,
-      salesUser: req.user._id,
+      salesUser: req.scopeUserId,
     }).select("history");
 
     if (!lead) {
@@ -382,6 +384,168 @@ const getLeadAnalytics = async (req, res, next) => {
   }
 };
 
+// @desc    Work done by each Sales member (activity, follow-ups, conversions, client forms)
+// @route   GET /api/leads/admin/work-summary?since=ISO_DATE
+// @access  Admin only
+// since: optional. Sirf is date ke baad ka kaam count hoga (khaali = All time)
+const getSalesWorkSummary = async (req, res, next) => {
+  try {
+    let since = null;
+
+    if (req.query.since) {
+      since = new Date(req.query.since);
+
+      if (Number.isNaN(since.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid since date",
+        });
+      }
+    }
+
+    // Har history entry = ek activity (status change, follow-up, note)
+    const historyInPeriod = since
+      ? [{ $match: { "history.at": { $gte: since } } }]
+      : [];
+
+    // WorkDetails ke liye: true agar date period ke andar hai
+    const savedInPeriod = since ? { $gte: ["$updatedAt", since] } : true;
+    const sharedInPeriod = {
+      $and: [
+        { $eq: ["$sharedToTech", true] },
+        since ? { $gte: ["$sharedAt", since] } : true,
+      ],
+    };
+
+    const [salesUsers, assignedRows, activityRows, clientRows] =
+      await Promise.all([
+        User.find({ role: "SALES" })
+          .select("name email isActive")
+          .sort({ name: 1 })
+          .lean(),
+
+        Lead.aggregate([
+          {
+            $group: {
+              _id: "$salesUser",
+              assignedLeads: { $sum: 1 },
+            },
+          },
+        ]),
+
+        Lead.aggregate([
+          { $unwind: "$history" },
+          ...historyInPeriod,
+          {
+            $group: {
+              _id: "$salesUser",
+              activities: { $sum: 1 },
+              statusUpdates: {
+                $sum: { $cond: [{ $ifNull: ["$history.toStatus", false] }, 1, 0] },
+              },
+              followUpsSet: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ["$history.followUpChanged", true] },
+                        { $ne: [{ $ifNull: ["$history.followUpDate", null] }, null] },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              notesAdded: {
+                $sum: {
+                  $cond: [
+                    { $gt: [{ $strLenCP: { $ifNull: ["$history.note", ""] } }, 0] },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              converted: {
+                $sum: { $cond: [{ $eq: ["$history.toStatus", "CONVERTED"] }, 1, 0] },
+              },
+              lastActivity: { $max: "$history.at" },
+            },
+          },
+        ]),
+
+        WorkDetails.aggregate([
+          {
+            $group: {
+              _id: "$salesUser",
+              clientFormsSaved: { $sum: { $cond: [savedInPeriod, 1, 0] } },
+              sharedToTech: { $sum: { $cond: [sharedInPeriod, 1, 0] } },
+            },
+          },
+        ]),
+      ]);
+
+    const byId = (rows) =>
+      new Map(rows.map((row) => [String(row._id), row]));
+
+    const assignedMap = byId(assignedRows);
+    const activityMap = byId(activityRows);
+    const clientMap = byId(clientRows);
+
+    const members = salesUsers
+      .map((user) => {
+        const id = String(user._id);
+        const activity = activityMap.get(id) || {};
+        const client = clientMap.get(id) || {};
+
+        return {
+          salesUserId: user._id,
+          name: user.name,
+          email: user.email,
+          isActive: user.isActive,
+          assignedLeads: assignedMap.get(id)?.assignedLeads || 0,
+          activities: activity.activities || 0,
+          statusUpdates: activity.statusUpdates || 0,
+          followUpsSet: activity.followUpsSet || 0,
+          notesAdded: activity.notesAdded || 0,
+          converted: activity.converted || 0,
+          clientFormsSaved: client.clientFormsSaved || 0,
+          sharedToTech: client.sharedToTech || 0,
+          lastActivity: activity.lastActivity || null,
+        };
+      })
+      .sort((a, b) => b.activities - a.activities || a.name.localeCompare(b.name));
+
+    const totals = members.reduce(
+      (sum, member) => ({
+        activities: sum.activities + member.activities,
+        statusUpdates: sum.statusUpdates + member.statusUpdates,
+        followUpsSet: sum.followUpsSet + member.followUpsSet,
+        notesAdded: sum.notesAdded + member.notesAdded,
+        converted: sum.converted + member.converted,
+        clientFormsSaved: sum.clientFormsSaved + member.clientFormsSaved,
+        sharedToTech: sum.sharedToTech + member.sharedToTech,
+      }),
+      {
+        activities: 0,
+        statusUpdates: 0,
+        followUpsSet: 0,
+        notesAdded: 0,
+        converted: 0,
+        clientFormsSaved: 0,
+        sharedToTech: 0,
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { totals, members },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getMyLeads,
   getMyFollowUps,
@@ -390,4 +554,5 @@ module.exports = {
   updateMyLead,
   getAllLeads,
   getLeadAnalytics,
+  getSalesWorkSummary,
 };
